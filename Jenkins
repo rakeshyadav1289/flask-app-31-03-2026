@@ -1,0 +1,47 @@
+pipeline {
+    agent {label 'vinod'}
+
+    stages {
+        stage('git clone') {
+            steps {
+                echo 'git clone'
+                git url: "https://github.com/rakeshyadav1289/flask-app-31-03-2026.git", branch: "main"
+            }
+        }
+        stage('docker build') {
+            steps {
+                echo 'Hello World'
+                sh "docker build -t flask-app ."
+                echo "build successfull"
+            }
+        }
+        stage('docker push') {
+            steps {
+                echo 'Hello World'
+                //sh "docker login -u rakeshyadav1289 -p Rakesh@123"
+                //sh "docker image tag flask-app rakeshyadav1289/flask-app:latest"
+               // sh "docker push rakeshyadav1289/flask-app:latest"
+               withCredentials([usernamePassword(credentialsId: 'dokcerHubCred', 
+                                                 usernameVariable: 'USER', 
+                                                 passwordVariable: 'PASS')]) {
+                sh 'echo "Username: $USER"'
+                sh 'echo "Password: $PASS"'
+                                   
+               // echo 'user_name: ${env.USER} user_pass: ${env.PASS} ' 
+                //sh 'docker login -u ${env.USER} -p ${env.PASS}'
+                sh 'docker login -u $USER -p $PASS'
+                sh 'docker image tag flask-app $USER/flask-app'
+                sh 'docker push  $USER/flask-app'
+                                                 }
+                echo 'successfully push images on docker hub'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Hello World'
+                sh "docker compose up -d"
+                echo "Deploy successfull"
+            }
+        }
+    }
+}
